@@ -20,140 +20,44 @@ const client = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// ✅ TEST ROUTE
 app.get("/", (req, res) => {
   res.send("API Running 🚀");
 });
 
-// ✅ PDF UPLOAD ROUTE
 app.post("/upload-pdf", upload.single("file"), async (req, res) => {
   try {
     const data = await pdfParse(req.file.buffer);
     res.json({ text: data.text });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "PDF processing failed" });
+  } catch {
+    res.json({ text: "" });
   }
 });
 
-// ✅ MAIN AI ROUTE
 app.post("/generate", async (req, res) => {
   try {
     const { type, input, role } = req.body;
 
-    if (!type || !input) {
-      return res.status(400).json({
-        error: "Type and input required",
-      });
-    }
-
     let prompt = "";
 
-    // 🎯 RESUME MODE
     if (type === "resume") {
-      prompt = `
-You are a professional career coach.
-
-Resume Data:
-${input}
-
-Target Role:
-${role || "Not specified"}
-
-Instructions:
-- Write in clear paragraph form
-- Do NOT use symbols like **, *, or markdown
-- Keep it human-like and professional
-
-Explain:
-- Improved resume
-- What improvements were made
-- Interview preparation with answers
-
-Courses you should take:
-1. Course name - platform
-2. Course name - platform
-3. Course name - platform
-`;
-    }
-
-    // 🧠 CAREER MODE
-    else if (type === "career") {
-      prompt = `
-You are a career expert.
-
-User Skills:
-${input}
-
-Instructions:
-- Write everything in paragraph form
-- No symbols or markdown
-
-Explain:
-- Best career paths
-- Required skills
-- Roadmap
-- Salary insights in India
-
-Courses you should take:
-1. Course name - platform
-2. Course name - platform
-3. Course name - platform
-`;
-    }
-
-    // 📊 SKILL GAP MODE
-    else if (type === "skillgap") {
-      prompt = `
-You are a tech mentor.
-
-User Skills:
-${input}
-
-Target Role:
-${role}
-
-Instructions:
-- Write explanation in paragraph form
-- No symbols or markdown
-
-Explain:
-- Missing skills
-- What to learn
-- Roadmap
-
-Courses you should take:
-1. Course name - platform
-2. Course name - platform
-3. Course name - platform
-`;
+      prompt = `Rewrite this resume professionally in clean paragraph English:\n${input}`;
+    } else if (type === "career") {
+      prompt = `Suggest best career paths, roadmap and courses for:\n${input}`;
+    } else {
+      prompt = `Find skill gaps for ${role} based on:\n${input}`;
     }
 
     const response = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      messages: [{ role: "user", content: prompt }],
     });
 
-    res.json({
-      result: response.choices[0].message.content,
-    });
+    res.json({ result: response.choices[0].message.content });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Error generating response",
-    });
+  } catch (err) {
+    res.json({ result: "Error occurred" });
   }
 });
 
-// 🚀 START SERVER
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
