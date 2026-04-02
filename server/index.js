@@ -20,10 +20,12 @@ const client = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// ✅ TEST
 app.get("/", (req, res) => {
   res.send("API Running 🚀");
 });
 
+// ✅ PDF
 app.post("/upload-pdf", upload.single("file"), async (req, res) => {
   try {
     const data = await pdfParse(req.file.buffer);
@@ -33,6 +35,7 @@ app.post("/upload-pdf", upload.single("file"), async (req, res) => {
   }
 });
 
+// ✅ AI
 app.post("/generate", async (req, res) => {
   try {
     const { type, input, role } = req.body;
@@ -40,9 +43,9 @@ app.post("/generate", async (req, res) => {
     let prompt = "";
 
     if (type === "resume") {
-      prompt = `Rewrite this resume professionally in clean paragraph English:\n${input}`;
+      prompt = `Improve this resume in clean professional English:\n${input}`;
     } else if (type === "career") {
-      prompt = `Suggest best career paths, roadmap and courses for:\n${input}`;
+      prompt = `Suggest career paths, roadmap and courses:\n${input}`;
     } else {
       prompt = `Find skill gaps for ${role} based on:\n${input}`;
     }
@@ -52,12 +55,16 @@ app.post("/generate", async (req, res) => {
       messages: [{ role: "user", content: prompt }],
     });
 
-    res.json({ result: response.choices[0].message.content });
+    res.json({
+      result: response.choices[0].message.content,
+    });
 
   } catch (err) {
+    console.error(err);
     res.json({ result: "Error occurred" });
   }
 });
 
+// ✅ PORT FIX
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));

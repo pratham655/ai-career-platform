@@ -8,23 +8,22 @@ function App() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const API = "https://ai-career-platform-xpan.onrender.com";
+
   const generate = async () => {
     setLoading(true);
 
     let finalInput = input;
 
-    // ✅ PDF handling
+    // PDF handling
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const pdfRes = await fetch(
-        "https://ai-career-platform-xpan.onrender.com/upload-pdf",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const pdfRes = await fetch(`${API}/upload-pdf`, {
+        method: "POST",
+        body: formData,
+      });
 
       const pdfData = await pdfRes.json();
       finalInput = pdfData.text;
@@ -36,33 +35,19 @@ function App() {
       return;
     }
 
-    // add user msg
-    setMessages((prev) => [
-      ...prev,
-      { type: "user", text: finalInput },
-    ]);
+    setMessages((prev) => [...prev, { type: "user", text: finalInput }]);
 
-    const res = await fetch(
-      "https://ai-career-platform-xpan.onrender.com/generate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: tab,
-          input: finalInput,
-          role,
-        }),
-      }
-    );
+    const res = await fetch(`${API}/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type: tab, input: finalInput, role }),
+    });
 
     const data = await res.json();
 
-    setMessages((prev) => [
-      ...prev,
-      { type: "ai", text: data.result },
-    ]);
+    setMessages((prev) => [...prev, { type: "ai", text: data.result }]);
 
     setInput("");
     setFile(null);
@@ -71,9 +56,9 @@ function App() {
 
   return (
     <div style={styles.container}>
-      <h1>🚀 AI Career Chat</h1>
+      <div style={styles.header}>🚀 AI Career Chat</div>
 
-      <div>
+      <div style={styles.tabs}>
         <button onClick={() => setTab("resume")}>Resume</button>
         <button onClick={() => setTab("career")}>Career</button>
         <button onClick={() => setTab("skillgap")}>Skill Gap</button>
@@ -88,52 +73,108 @@ function App() {
             {msg.text}
           </div>
         ))}
-
         {loading && <p>Thinking...</p>}
       </div>
 
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+      <div style={styles.inputArea}>
+        <input type="file" onChange={(e) => setFile(e.target.files[0])} />
 
-      <input
-        placeholder="Role (optional)"
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-      />
+        <input
+          placeholder="Role (optional)"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          style={styles.input}
+        />
 
-      <textarea
-        placeholder="Type message..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
+        <textarea
+          placeholder="Type your message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          style={styles.textarea}
+        />
 
-      <button onClick={generate}>Send</button>
+        <button onClick={generate} style={styles.button}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
 
 const styles = {
   container: {
-    padding: "20px",
-    background: "linear-gradient(135deg,#ff6a00,#ee0979)",
-    minHeight: "100vh",
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    background: "#0f172a",
     color: "white",
   },
+
+  header: {
+    textAlign: "center",
+    padding: "15px",
+    fontSize: "22px",
+    fontWeight: "bold",
+    borderBottom: "1px solid #333",
+  },
+
+  tabs: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    padding: "10px",
+  },
+
   chat: {
-    minHeight: "300px",
-    margin: "10px 0",
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
   },
+
   user: {
-    textAlign: "right",
+    alignSelf: "flex-end",
+    background: "#2563eb",
+    padding: "12px",
+    borderRadius: "12px",
     margin: "10px",
-    background: "#00c6ff",
-    padding: "10px",
+    maxWidth: "60%",
   },
+
   ai: {
-    textAlign: "left",
+    alignSelf: "flex-start",
+    background: "#1e293b",
+    padding: "12px",
+    borderRadius: "12px",
     margin: "10px",
-    background: "white",
-    color: "black",
+    maxWidth: "60%",
+  },
+
+  inputArea: {
     padding: "10px",
+    borderTop: "1px solid #333",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+
+  input: {
+    padding: "8px",
+    borderRadius: "6px",
+  },
+
+  textarea: {
+    padding: "10px",
+    borderRadius: "6px",
+  },
+
+  button: {
+    padding: "10px",
+    background: "#22c55e",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
 };
 
